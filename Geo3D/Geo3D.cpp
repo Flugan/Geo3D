@@ -8,8 +8,8 @@
 bool gl_left = false;
 
 float gl_conv = 1.0f;
-float gl_screenSize = 15.6f;
-float gl_separation = 8.0f;
+float gl_screenSize = 27.0f;
+float gl_separation = 14.0f;
 
 int gl_dumpBIN = false;
 int gl_dumpOnly = false;
@@ -981,8 +981,28 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	}
 
 	if (runtime->is_key_down(VK_CONTROL)) {
-		if (runtime->is_key_pressed(0x54)) { // T key
+		if (runtime->is_key_pressed(VK_F2)) { // T key
 			gl_2D = !gl_2D;
+		}
+		if (runtime->is_key_pressed(VK_F3)) {
+			if (gl_separation < 2) {
+				gl_separation = 2.0f;
+			}
+			else if (gl_separation < 20.0f) {
+				gl_separation -= 1.8f;
+			}
+			else {
+				gl_separation -= 4.8f;
+			}
+			reshade::set_config_value(nullptr, "Geo3D", "StereoSeparation", gl_separation);
+		}
+		if (runtime->is_key_pressed(VK_F4)) {
+			if (gl_separation > 20.0f)
+				gl_separation += 4.0f;
+			else {
+				gl_separation += 1.0f;
+			}
+			reshade::set_config_value(nullptr, "Geo3D", "StereoSeparation", gl_separation);
 		}
 		if (runtime->is_key_pressed(VK_F5)) {
 			gl_conv *= 0.8f;
