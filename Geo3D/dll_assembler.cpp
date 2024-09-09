@@ -13,6 +13,7 @@ DWORD strToDWORD(string s);
 
 extern int gl_dumpBIN;
 extern int gl_dumpASM;
+extern bool gl_zDepth;
 
 HMODULE dxc_module = 0;
 HMODULE dxil_module = 0;
@@ -506,7 +507,10 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 		shaderS.push_back("  br i1 %" + to_string(lastValue + 2) + ", label %" + to_string(lastValue + 3) + ", label %" + to_string(lastValue + 7));
 		shaderS.push_back("");
 		shaderS.push_back("; <label>:" + to_string(lastValue + 3));
-		shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
+		if (gl_zDepth)
+			shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sZ + ", " + convS);
+		else
+			shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
 		shaderS.push_back("  %" + to_string(lastValue + 5) + " = fmul fast float %" + to_string(lastValue + 4) + ", " + sepS);
 		shaderS.push_back("  %" + to_string(lastValue + 6) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 5));
 		shaderS.push_back("  br label %" + to_string(lastValue + 7));

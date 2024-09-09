@@ -17,6 +17,7 @@ int gl_dumpASM = false;
 
 bool gl_2D = false;
 bool gl_quickLoad = true;
+bool gl_zDepth = false;
 
 std::filesystem::path dump_path;
 std::filesystem::path fix_path;
@@ -801,24 +802,24 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 		for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
 			PSO* pso = &it->second;
 			if (runtime->is_key_down(VK_CONTROL)) {
-				if (vertexShaders.count(pso->crcVS) == 1) {
-					swprintf_s(sPath, MAX_PATH, L"%08lX-vs.skip", pso->crcVS);
-					filesystem::path file = fix_path_dump / sPath;
-					_wfopen_s(&f, file.c_str(), L"wb");
-					if (f != 0) {
-						auto ASM = asmShader(pso->vsS.code, pso->vsS.code_size);
-						fwrite(ASM.data(), 1, ASM.size(), f);
-						fclose(f);
-					}
-				}
-			}
-			else {
 				if (pixelShaders.count(pso->crcPS) == 1) {
 					swprintf_s(sPath, MAX_PATH, L"%08lX-ps.skip", pso->crcPS);
 					filesystem::path file = fix_path_dump / sPath;
 					_wfopen_s(&f, file.c_str(), L"wb");
 					if (f != 0) {
 						auto ASM = asmShader(pso->psS.code, pso->psS.code_size);
+						fwrite(ASM.data(), 1, ASM.size(), f);
+						fclose(f);
+					}
+				}
+			}
+			else {
+				if (vertexShaders.count(pso->crcVS) == 1) {
+					swprintf_s(sPath, MAX_PATH, L"%08lX-vs.pkip", pso->crcVS);
+					filesystem::path file = fix_path_dump / sPath;
+					_wfopen_s(&f, file.c_str(), L"wb");
+					if (f != 0) {
+						auto ASM = asmShader(pso->vsS.code, pso->vsS.code_size);
 						fwrite(ASM.data(), 1, ASM.size(), f);
 						fclose(f);
 					}
@@ -856,7 +857,7 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	if (runtime->is_key_pressed(VK_NUMPAD3)) {
 		for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
 			PSO* pso = &it->second;
-			if (pso->crcPS == currentPS) {
+			if (pso->crcPS == currentPS && currentPS != 0) {
 				filesystem::path file;
 				filesystem::create_directories(fix_path);
 				if (huntUsing2D) {
@@ -907,7 +908,7 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	if (runtime->is_key_pressed(VK_NUMPAD6)) {
 		for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
 			PSO* pso = &it->second;
-			if (pso->crcVS == currentVS) {
+			if (pso->crcVS == currentVS && currentVS != 0) {
 				filesystem::path file;
 				filesystem::create_directories(fix_path);
 				if (huntUsing2D) {
@@ -958,7 +959,7 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	if (runtime->is_key_pressed(VK_NUMPAD9)) {
 		for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
 			PSO* pso = &it->second;
-			if (pso->crcCS == currentCS) {
+			if (pso->crcCS == currentCS && currentCS != 0) {
 				filesystem::path file;
 				filesystem::create_directories(fix_path);
 				if (huntUsing2D) {
@@ -981,8 +982,28 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	}
 
 	if (runtime->is_key_down(VK_CONTROL)) {
-		if (runtime->is_key_pressed(0x54)) { // T key
+		if (runtime->is_key_pressed(VK_F2)) {
 			gl_2D = !gl_2D;
+		}
+		if (runtime->is_key_pressed(VK_F3)) {
+			if (gl_separation < 20)
+				gl_separation--;
+			else if (gl_separation < 40)
+				gl_separation -= 2;
+			else
+				gl_separation -= 4;
+			if (gl_separation < 1)
+				gl_separation = 1;
+			reshade::set_config_value(nullptr, "Geo3D", "StereoSeparation", gl_separation);
+		}
+		if (runtime->is_key_pressed(VK_F4)) {
+			if (gl_separation < 20)
+				gl_separation++;
+			else if (gl_separation < 40)
+				gl_separation += 2;
+			else
+				gl_separation += 4;
+			reshade::set_config_value(nullptr, "Geo3D", "StereoSeparation", gl_separation);
 		}
 		if (runtime->is_key_pressed(VK_F5)) {
 			gl_conv *= 0.8f;
@@ -1002,6 +1023,7 @@ static void load_config()
 	reshade::get_config_value(nullptr, "Geo3D", "DumpASM", gl_dumpASM);
 
 	reshade::get_config_value(nullptr, "Geo3D", "QuickLoad", gl_quickLoad);
+	reshade::get_config_value(nullptr, "Geo3D", "zDepth", gl_zDepth);
 	
 	reshade::get_config_value(nullptr, "Geo3D", "StereoConvergence", gl_conv);
 	reshade::get_config_value(nullptr, "Geo3D", "StereoScreenSize", gl_screenSize);

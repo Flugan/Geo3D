@@ -13,6 +13,7 @@ float gl_separation = 0.1f;
 float gl_screenSize = 55;
 float gl_conv = 1.0;
 bool gl_left = false;
+bool gl_zDepth  = false;
 std::filesystem::path dump_path;
 
 // Primary hash calculation for all shader file names, all textures.
