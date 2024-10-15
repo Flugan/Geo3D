@@ -9,6 +9,7 @@ CRITICAL_SECTION gl_CS;
 
 int gl_dumpBIN = false;
 int gl_dumpASM = false;
+int gl_fixDXIL = false;
 float gl_separation = 0.1f;
 float gl_screenSize = 55;
 float gl_conv = 1.0;

@@ -13,6 +13,7 @@ DWORD strToDWORD(string s);
 
 extern int gl_dumpBIN;
 extern int gl_dumpASM;
+extern int gl_fixDXIL;
 
 HMODULE dxc_module = 0;
 HMODULE dxil_module = 0;
@@ -501,21 +502,30 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 			}
 		}
 
-		shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sX + ", 0.000000e+00");
-		shaderS.push_back("  %" + to_string(lastValue + 2) + " = fcmp fast une float " + sW + ", 1.000000e+00");
-		shaderS.push_back("  br i1 %" + to_string(lastValue + 2) + ", label %" + to_string(lastValue + 3) + ", label %" + to_string(lastValue + 7));
-		shaderS.push_back("");
-		shaderS.push_back("; <label>:" + to_string(lastValue + 3));
-		shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
-		shaderS.push_back("  %" + to_string(lastValue + 5) + " = fmul fast float %" + to_string(lastValue + 4) + ", " + sepS);
-		shaderS.push_back("  %" + to_string(lastValue + 6) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 5));
-		shaderS.push_back("  br label %" + to_string(lastValue + 7));
-		shaderS.push_back("");
-		shaderS.push_back("; <label>:" + to_string(lastValue + 7));
-		shaderS.push_back("  %" + to_string(lastValue + 8) + " = phi float [ %" +
-			to_string(lastValue + 6) + ", %" + to_string(lastValue + 3) + " ], [ %" + to_string(lastValue + 1) + ", %" + startNumber + " ]");
-		sizeGap = 8;
-		rowGap = 12;
+		if (gl_fixDXIL) {
+			shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sW + ", " + convS);
+			shaderS.push_back("  %" + to_string(lastValue + 2) + " = fmul fast float %" + to_string(lastValue + 1) + ", " + sepS);
+			shaderS.push_back("  %" + to_string(lastValue + 3) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 2));
+			sizeGap = 3;
+			rowGap = 3;
+		}
+		else {
+			shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sX + ", 0.000000e+00");
+			shaderS.push_back("  %" + to_string(lastValue + 2) + " = fcmp fast une float " + sW + ", 1.000000e+00");
+			shaderS.push_back("  br i1 %" + to_string(lastValue + 2) + ", label %" + to_string(lastValue + 3) + ", label %" + to_string(lastValue + 7));
+			shaderS.push_back("");
+			shaderS.push_back("; <label>:" + to_string(lastValue + 3));
+			shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
+			shaderS.push_back("  %" + to_string(lastValue + 5) + " = fmul fast float %" + to_string(lastValue + 4) + ", " + sepS);
+			shaderS.push_back("  %" + to_string(lastValue + 6) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 5));
+			shaderS.push_back("  br label %" + to_string(lastValue + 7));
+			shaderS.push_back("");
+			shaderS.push_back("; <label>:" + to_string(lastValue + 7));
+			shaderS.push_back("  %" + to_string(lastValue + 8) + " = phi float [ %" +
+				to_string(lastValue + 6) + ", %" + to_string(lastValue + 3) + " ], [ %" + to_string(lastValue + 1) + ", %" + startNumber + " ]");
+			sizeGap = 8;
+			rowGap = 12;
+		}
 
 		for (size_t i = 0; i < lines.size(); i++) {
 			string s = lines[i];
