@@ -637,11 +637,18 @@ vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenS
 				string sourceReg = "r" + to_string(tempReg);
 				string calcReg = "r" + to_string(tempReg + 1);
 
-				shader +=
+				if (gl_fixDXIL) {
+					shader +=
+						"    add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
+						"    mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n";
+				}
+				else {
+					shader +=
 						"    if_ne " + sourceReg + ".w, c250.z\n" +
 						"      add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
 						"      mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n" +
 						"    endif\n";
+				}
 			}
 		}
 		else {
@@ -726,12 +733,18 @@ vector<UINT8> changeASM(bool dx9, vector<UINT8> ASM, bool left, float conv, floa
 				string sourceReg = "r" + to_string(temp - 1);
 				string calcReg = "r" + to_string(temp - 2);
 
-				shader +=
+				if (gl_fixDXIL) {
+					shader +=
+						"add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
+						"mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
+				}
+				else {
 					"ne " + calcReg + ".x, " + sourceReg + ".w, l(1.000000)\n" +
-					"if_nz " + calcReg + ".x\n" +
-					"  add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
-					"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
-					"endif\n";
+						"if_nz " + calcReg + ".x\n" +
+						"  add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
+						"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
+						"endif\n";
+				}
 			}
 			if (oReg.size() == 0) {
 				// no output
