@@ -8,8 +8,8 @@
 bool gl_left = false;
 
 float gl_conv = 1.0f;
-float gl_screenSize = 15.6f;
-float gl_separation = 8.0f;
+float gl_screenSize = 27.0f;
+float gl_separation = 14.0f;
 
 int gl_dumpBIN = false;
 int gl_dumpOnly = false;
@@ -48,9 +48,11 @@ struct PSO {
 
 	shader_desc* ds;
 	shader_desc dsS;
+	uint32_t crcDS;
 
 	shader_desc* gs;
 	shader_desc gsS;
+	uint32_t crcGS;
 
 	bool skip;
 	bool noDraw;
@@ -230,11 +232,7 @@ static void storePipelineStateCrosire(pipeline_layout layout, uint32_t subobject
 			newDepth->front_stencil_func = depth_stencil_state.front_stencil_func;
 			newDepth->front_stencil_pass_op = depth_stencil_state.front_stencil_pass_op;
 			newDepth->stencil_enable = depth_stencil_state.stencil_enable;
-			/*
-			newDepth->stencil_read_mask = depth_stencil_state.stencil_read_mask;
-			newDepth->stencil_reference_value = depth_stencil_state.stencil_reference_value;
-			newDepth->stencil_write_mask = depth_stencil_state.stencil_write_mask;
-			*/			
+
 			newDepth->front_stencil_read_mask = depth_stencil_state.front_stencil_read_mask;
 			newDepth->front_stencil_reference_value = depth_stencil_state.front_stencil_reference_value;
 			newDepth->front_stencil_write_mask = depth_stencil_state.front_stencil_write_mask;			
@@ -347,7 +345,6 @@ static void  enumerateFiles() {
 	}
 }
 
-mutex m;
 void updatePipeline(reshade::api::device* device, PSO* pso) {
 	vector<UINT8> ASM;
 	vector<UINT8> VS_L, VS_R, PS_L, PS_R, CS_L, CS_R;
@@ -409,8 +406,8 @@ void updatePipeline(reshade::api::device* device, PSO* pso) {
 
 	if (pso->psEdit.size() > 0) {
 		ASM = pso->psEdit;
-		PS_L = ASM;
-		PS_R = ASM;
+		PS_L = patch(dx9, ASM, true, gl_conv, gl_screenSize, gl_separation);
+		PS_R = patch(dx9, ASM, false, gl_conv, gl_screenSize, gl_separation);
 	}
 	else if (pso->psS.code_size > 0) {
 		pso->ps->code = pso->psS.code;
@@ -419,13 +416,104 @@ void updatePipeline(reshade::api::device* device, PSO* pso) {
 
 	if (pso->csEdit.size() > 0) {
 		ASM = pso->csEdit;
-		CS_L = ASM;
-		CS_R = ASM;
+		CS_L = patch(dx9, ASM, true, gl_conv, gl_screenSize, gl_separation);
+		CS_R = patch(dx9, ASM, false, gl_conv, gl_screenSize, gl_separation);;
 	}
 	else if (pso->csS.code_size > 0) {
 		pso->cs->code = pso->csS.code;
 		pso->cs->code_size = pso->csS.code_size;
 	}
+
+	if (gl_dumpASM) {
+		FILE* f;
+		wchar_t sPath[MAX_PATH];
+		filesystem::create_directories(dump_path);
+		filesystem::path file;
+
+		if (VS_L.size() > 9) {
+			swprintf_s(sPath, MAX_PATH, L"%08lX-vs-left.txt", pso->crcVS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(VS_L.data(), 1, VS_L.size(), f);
+				fclose(f);
+			}
+			swprintf_s(sPath, MAX_PATH, L"%08lX-vs-right.txt", pso->crcVS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(VS_R.data(), 1, VS_R.size(), f);
+				fclose(f);
+			}
+		}
+		if (DS_L.size() > 9) {
+			swprintf_s(sPath, MAX_PATH, L"%08lX-ds-left.txt", pso->crcDS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(DS_L.data(), 1, DS_L.size(), f);
+				fclose(f);
+			}
+			swprintf_s(sPath, MAX_PATH, L"%08lX-ds-right.txt", pso->crcDS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(DS_R.data(), 1, DS_R.size(), f);
+				fclose(f);
+			}
+		}
+		if (GS_L.size() > 9) {
+			swprintf_s(sPath, MAX_PATH, L"%08lX-gs-left.txt", pso->crcGS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(GS_L.data(), 1, GS_L.size(), f);
+				fclose(f);
+			}
+			swprintf_s(sPath, MAX_PATH, L"%08lX-gs-right.txt", pso->crcGS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(GS_R.data(), 1, GS_R.size(), f);
+				fclose(f);
+			}
+		}
+		if (PS_L.size() > 9) {
+			swprintf_s(sPath, MAX_PATH, L"%08lX-ps-left.txt", pso->crcPS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(PS_L.data(), 1, PS_L.size(), f);
+				fclose(f);
+			}
+			swprintf_s(sPath, MAX_PATH, L"%08lX-ps-right.txt", pso->crcPS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(PS_R.data(), 1, PS_R.size(), f);
+				fclose(f);
+			}
+		}
+		if (CS_L.size() > 9) {
+			swprintf_s(sPath, MAX_PATH, L"%08lX-cs-left.txt", pso->crcCS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(CS_L.data(), 1, CS_L.size(), f);
+				fclose(f);
+			}
+			swprintf_s(sPath, MAX_PATH, L"%08lX-cs-right.txt", pso->crcCS);
+			file = dump_path / sPath;
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(CS_R.data(), 1, CS_R.size(), f);
+				fclose(f);
+			}
+		}
+	}
+
+	if (gl_dumpOnly)
+		return;
 
 	if (VS_L.size() > 0) {
 		auto vsV = readV(pso->vsS.code, pso->vsS.code_size);
@@ -453,7 +541,6 @@ void updatePipeline(reshade::api::device* device, PSO* pso) {
 		cGS_R = assembler(dx9, GS_R, gsV);
 	}
 
-	m.lock();
 	if (cVS_L.size() > 0) {
 		pso->vs->code = cVS_L.data();
 		pso->vs->code_size = cVS_L.size();
@@ -505,7 +592,6 @@ void updatePipeline(reshade::api::device* device, PSO* pso) {
 	if (device->create_pipeline(pso->layout, (UINT32)pso->objects.size(), pso->objects.data(), &pipeR)) {
 		pso->Right = pipeR;
 	}
-	m.unlock();
 }
 
 static void onInitPipeline(device* device, pipeline_layout layout, uint32_t subobject_count, const pipeline_subobject* subobjects, pipeline pipeline)
@@ -544,11 +630,11 @@ static void onInitPipeline(device* device, pipeline_layout layout, uint32_t subo
 			break;
 		case pipeline_subobject_type::domain_shader:
 			ds = static_cast<shader_desc*>(subobjects[i].data);
-			dumpShader(L"ds", ds->code, ds->code_size);
+			pso.crcGS = dumpShader(L"ds", ds->code, ds->code_size);
 			break;
 		case pipeline_subobject_type::geometry_shader:
 			gs = static_cast<shader_desc*>(subobjects[i].data);
-			dumpShader(L"gs", gs->code, gs->code_size);
+			pso.crcGS = dumpShader(L"gs", gs->code, gs->code_size);
 			break;
 		case pipeline_subobject_type::hull_shader:
 			hs = static_cast<shader_desc*>(subobjects[i].data);
@@ -556,9 +642,6 @@ static void onInitPipeline(device* device, pipeline_layout layout, uint32_t subo
 			break;
 		}
 	}
-
-	if (gl_dumpOnly)
-		return;
 
 	wchar_t sPath[MAX_PATH];
 	swprintf_s(sPath, MAX_PATH, L"%08lX-vs.skip", pso.crcVS);
@@ -699,23 +782,18 @@ static void onBindPipeline(command_list* cmd_list, pipeline_stage stage, reshade
 	}
 }
 
+bool is_left;
 static void onPresent(command_queue* queue, swapchain* swapchain, const rect* source_rect, const rect* dest_rect, uint32_t dirty_rect_count, const rect* dirty_rects) {
-	gl_left = !gl_left;
+	gl_left = is_left;
 }
 
 static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_list, resource_view rtv, resource_view rtv_srgb)
 {
-	/*
 	auto var = runtime->find_uniform_variable(nullptr, "framecount");
 	unsigned int framecountElse = 0;
 	runtime->get_uniform_value_uint(var, &framecountElse, 1);
 	if (framecountElse > 0)
-		gl_left = (framecountElse % 2) == 0;
-	*/
-
-	if (runtime->is_key_pressed(VK_F8)) {
-		gl_left = !gl_left;
-	}
+		is_left = (framecountElse % 2) == 0;
 
 	if (runtime->is_key_pressed(VK_NUMPAD0)) {
 		edit = !edit;
