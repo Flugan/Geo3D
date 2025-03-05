@@ -11,10 +11,10 @@ FILE *failFile = NULL;
 vector<DWORD> assembleIns(string s);
 DWORD strToDWORD(string s);
 
-extern int gl_dumpBIN;
-extern int gl_dumpRAW;
-extern int gl_dumpASM;
-extern bool gl_DXIL_if;
+extern bool gl_dumpBIN;
+extern bool gl_dumpASM;
+extern bool gl_type;
+extern bool gl_depthZ;
 
 HMODULE dxc_module = 0;
 HMODULE dxil_module = 0;
@@ -38,7 +38,7 @@ uint32_t dumpShader(bool dx9, const wchar_t *type, const void *pData, size_t len
 		if (gl_dumpBIN) {
 			filesystem::path file;
 			filesystem::create_directories(dump_path);
-			swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
+			swprintf_s(sPath, MAX_PATH, L"%08lX-%s.bin", crc, type);
 			file = dump_path / sPath;
 			_wfopen_s(&f, file.c_str(), L"wb");
 			if (f != 0) {
@@ -47,110 +47,28 @@ uint32_t dumpShader(bool dx9, const wchar_t *type, const void *pData, size_t len
 			}
 		}
 		if (gl_dumpASM) {
-			auto v = readV(pData, length);
-			vector<UINT8> ASM;
-			if (dx9) {
-				ASM = asmShader(dx9, pData, length);
+			auto ASM = asmShader(pData, length);
+			filesystem::path file;
+			if (handle != 0 && pipeline) {
+				swprintf_s(sPath, MAX_PATH, L"%16llX", handle);
+				auto pipeline_path = dump_path / sPath;
+				filesystem::create_directories(pipeline_path);
+				swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
+				file = pipeline_path / sPath;
 			}
 			else {
-				ASM = disassembler(v);
+				filesystem::create_directories(dump_path);
+				swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
+				file = dump_path / sPath;
 			}
-			if (ASM.size() > 0) {
-				filesystem::path file;
-				if (handle != 0 && pipeline) {
-					swprintf_s(sPath, MAX_PATH, L"%16llX", handle);
-					auto pipeline_path = dump_path / sPath;
-					filesystem::create_directories(pipeline_path);
-					swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
-					file = pipeline_path / sPath;
-				}
-				else {
-					filesystem::create_directories(dump_path);
-					swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
-					file = dump_path / sPath;
-				}
-				_wfopen_s(&f, file.c_str(), L"wb");
-				if (f != 0) {
-					fwrite(ASM.data(), 1, ASM.size(), f);
-					fclose(f);
-				}
+			_wfopen_s(&f, file.c_str(), L"wb");
+			if (f != 0) {
+				fwrite(ASM.data(), 1, ASM.size(), f);
+				fclose(f);
 			}
 		}
 	}
 	return crc;
-}
-
-vector<DWORD> changeSM2(vector<DWORD> code, bool left, int tempReg, float conv, float screenSize, float separation) {
-	vector<DWORD> newCode;
-	bool define = false;
-	for (size_t i = 0; i < code.size(); i++) {
-		if (code[i] == 0xFFFF) {
-			//add r1.x, r0.w, c250.x
-			//mad r0.x, r1.x, c250.y, r0.x
-			//mov oPos, r0
-			newCode.push_back(0x03000002); // add
-			newCode.push_back(0x80010000 + tempReg + 1);
-			newCode.push_back(0x80FF0000 + tempReg + 0);
-			newCode.push_back(0xA00000FA);
-
-
-			newCode.push_back(0x04000004); // mad
-			newCode.push_back(0x80010000 + tempReg + 0);
-			newCode.push_back(0x80000000 + tempReg + 1);
-			newCode.push_back(0xA05500FA);
-			newCode.push_back(0x80000000 + tempReg + 0);
-
-			newCode.push_back(0x02000001); // mov
-			newCode.push_back(0xC00F0000);
-			newCode.push_back(0x80E40000 + tempReg + 0);
-
-			newCode.push_back(code[i]);
-			break;
-		}
-		if (!define) {
-			if (code[i] == 0x200001F) {
-				float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
-				// first declare
-				newCode.push_back(0x5000051);
-				newCode.push_back(0xA00F00FA);
-				float fConv = -conv;
-				float fSep = left ? -finalSep : finalSep;
-				DWORD *conv = (DWORD *)&fConv;
-				DWORD *sep = (DWORD *)&fSep;
-				newCode.push_back(*conv);
-				newCode.push_back(*sep);
-				newCode.push_back(0);
-				newCode.push_back(0);
-				// complete declare
-				newCode.push_back(code[i++]);
-				newCode.push_back(code[i++]);
-				newCode.push_back(code[i]);
-				define = true;
-			}
-			else {
-				newCode.push_back(code[i]);
-			}
-		}
-		else {
-			int numValues = (code[i] & 0xFF000000) >> 24;
-			newCode.push_back(code[i++]);
-			if ((code[i] & 0xF0000000) == 0xC0000000) {
-				// oPos, replace oPos with r0
-				DWORD oPosReplacement = 0x80000000 + tempReg + (code[i++] & 0xFFFFFFF);
-				newCode.push_back(oPosReplacement);
-			}
-			else {
-				newCode.push_back(code[i++]);
-			}
-			numValues--;
-			while (numValues) {
-				newCode.push_back(code[i++]);
-				numValues--;
-			}
-			i--;
-		}
-	}
-	return newCode;
 }
 
 vector<UINT8> convertSM2(vector<UINT8> asmFile) {
@@ -239,11 +157,21 @@ vector<UINT8> convertSM2(vector<UINT8> asmFile) {
 			pos = reg.find("sincos", pos + 1);
 	}
 
-	size_t vsPos = reg.find("vs_2_0");
-	reg = reg.substr(0, vsPos) + "vs_3_0" + reg.substr(vsPos + 6);
+	size_t vsPos = reg.find("vs_2");
+	if (vsPos != string::npos)
+		reg = reg.substr(0, vsPos) + "vs_3_0" + reg.substr(vsPos + 6);
 
-	size_t psPos = reg.find("ps_2_0");
-	reg = reg.substr(0, psPos) + "ps_3_0" + reg.substr(psPos + 6);
+	size_t psPos = reg.find("ps_2");
+	if (psPos != string::npos)
+		reg = reg.substr(0, psPos) + "ps_3_0" + reg.substr(psPos + 6);
+
+	vsPos = reg.find("vs_1");
+	if (vsPos != string::npos)
+		reg = reg.substr(0, vsPos) + "vs_3_0" + reg.substr(vsPos + 6);
+
+	psPos = reg.find("ps_1");
+	if (psPos != string::npos)
+		reg = reg.substr(0, psPos) + "ps_3_0" + reg.substr(psPos + 6);
 
 	size_t dcl_pos = reg.rfind("dcl_");
 	dcl_pos = reg.find("\n", dcl_pos) + 1;
@@ -252,23 +180,20 @@ vector<UINT8> convertSM2(vector<UINT8> asmFile) {
 	return readV(reg.data(), reg.size());
 }
 
-vector<UINT8> asmShader(bool dx9, const void* pData, size_t length) {
+vector<UINT8> asmShader(const void* pData, size_t length) {
 	auto v = readV(pData, length);
-	if (dx9) {
-		LPD3DXBUFFER pDisassembly = NULL;
-		D3DXDisassembleShader((const DWORD*)v.data(), FALSE, NULL, &pDisassembly);
-		auto ASM = readV(pDisassembly->GetBufferPointer(), pDisassembly->GetBufferSize());
-		string reg((char*)ASM.data());
-		if (reg.find("VS_2") != string::npos ||
-			reg.find("PS_2") != string::npos) {
-			return convertSM2(ASM);
-		}
-		else {
-			return ASM;
-		}
+	auto ASM = disassembler(v);
+	if (ASM.size() == 0)
+		return ASM;
+	string reg((char*)ASM.data());
+	if (reg.find("vs_2") != string::npos ||
+		reg.find("ps_2") != string::npos ||
+		reg.find("vs_1") != string::npos ||
+		reg.find("ps_1") != string::npos) {
+		return convertSM2(ASM);
 	}
 	else {
-		return disassembler(v);
+		return ASM;
 	}
 }
 
@@ -448,6 +373,8 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 		string sOut = lines[outPos];
 		string sX = lines[outPos].substr(outLenght);
 		sX = sX.substr(0, sX.find(')'));
+		string sZ = lines[outPos + 2].substr(outLenght);
+		sZ = sZ.substr(0, sZ.find(')'));
 		string sW = lines[outPos + 3].substr(outLenght);
 		sW = sW.substr(0, sW.find(')'));
 		string start = sOut.substr(0, sOut.find(sX));
@@ -474,7 +401,6 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 		// Go through the wilderness
 		vector<string> shader;
 		vector<string> shaderS;
-		bool bSmall = !gl_DXIL_if;
 		size_t sizeGap = 0;
 		size_t rowGap = 0;
 
@@ -489,8 +415,12 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 		sprintf_s(buf, 80, "0x%016llX", *pConv);
 		string convS(buf);
 
-		if (bSmall) {
-			shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sW + ", " + convS);
+		if (gl_type) {
+			if (gl_depthZ)
+				shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sZ + ", " + convS);
+			else
+				shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sW + ", " + convS);
+
 			shaderS.push_back("  %" + to_string(lastValue + 2) + " = fmul fast float %" + to_string(lastValue + 1) + ", " + sepS);
 			shaderS.push_back("  %" + to_string(lastValue + 3) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 2));
 			sizeGap = 3;
@@ -512,11 +442,19 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 			}
 
 			shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sX + ", 0.000000e+00");
-			shaderS.push_back("  %" + to_string(lastValue + 2) + " = fcmp fast une float " + sW + ", 1.000000e+00");
+			if (gl_depthZ)
+				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fadd fast float " + sZ + ", " + convS);
+			else
+				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fadd fast float " + sW + ", " + convS);
+
 			shaderS.push_back("  br i1 %" + to_string(lastValue + 2) + ", label %" + to_string(lastValue + 3) + ", label %" + to_string(lastValue + 7));
 			shaderS.push_back("");
 			shaderS.push_back("; <label>:" + to_string(lastValue + 3));
-			shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
+			if (gl_depthZ)
+				shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sZ + ", " + convS);
+			else
+				shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
+
 			shaderS.push_back("  %" + to_string(lastValue + 5) + " = fmul fast float %" + to_string(lastValue + 4) + ", " + sepS);
 			shaderS.push_back("  %" + to_string(lastValue + 6) + " = fadd fast float " + sX + ", %" + to_string(lastValue + 5));
 			shaderS.push_back("  br label %" + to_string(lastValue + 7));
@@ -646,11 +584,18 @@ vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenS
 				string sourceReg = "r" + to_string(tempReg);
 				string calcReg = "r" + to_string(tempReg + 1);
 
-				shader +=
-					"    if_ne " + sourceReg + ".w, c250.z\n" +
-					"      add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
-					"      mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n" +
-					"    endif\n";
+				if (gl_type) {
+						shader +=
+							"add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
+							"mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n";
+					}
+				} else {
+					shader +=
+							"if_ne " + sourceReg + ".w, c250.z\n" +
+							"  add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
+							"  mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n" +
+							"endif\n";
+				}
 			}
 		}
 		else {
@@ -735,16 +680,17 @@ vector<UINT8> changeASM(bool dx9, vector<UINT8> ASM, bool left, float conv, floa
 				string sourceReg = "r" + to_string(temp - 1);
 				string calcReg = "r" + to_string(temp - 2);
 
-				shader +=
-				/*
-				"add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
-				"mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n";
-				*/
-				"ne " + calcReg + ".x, " + sourceReg + ".w, l(1.000000)\n" +
-				"if_nz " + calcReg + ".x\n"
-				"  add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
-				"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
-				"endif\n";
+				if (gl_type) {
+					shader +=
+						"add " + calcReg + ".x, " + sourceReg + ".z, l(" + conv + ")\n" +
+						"mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +				}
+				else {
+					shader +=
+						"if_ne " + sourceReg + ".w, l(1.000000)\n" +
+						"  add " + calcReg + ".x, " + sourceReg + ".z, l(" + conv + ")\n" +
+						"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
+						"endif\n";
+				}
 			}
 			if (oReg.size() == 0) {
 				// no output
@@ -1093,7 +1039,7 @@ vector<UINT8> disassembler(vector<UINT8> buffer) {
 				return readV(pBlob->GetBufferPointer(), pBlob->GetBufferSize());
 			}
 		}
-		return ret;
+		return readV(asmBuffer, asmSize);
 	}
 
 	UINT8 fourcc[4];
@@ -1106,7 +1052,7 @@ vector<UINT8> disassembler(vector<UINT8> buffer) {
 	UINT8* pPosition = buffer.data();
 	std::memcpy(fourcc, pPosition, 4);
 	if (memcmp(fourcc, "DXBC", 4) != 0) {
-		return ret;
+		return readV(asmBuffer, asmSize);
 	}
 	pPosition += 4;
 	std::memcpy(fHash, pPosition, 16);
@@ -3329,6 +3275,8 @@ vector<UINT8> assembler(bool dx9, vector<UINT8> asmFile, vector<UINT8> buffer) {
 			if (hr == S_OK) {
 				ComPtr<IDxcBlob> pBlob;
 				pRes->GetResult(pBlob.GetAddressOf());
+				if (pBlob == nullptr)
+					return ret;
 				UINT8* pASM = (UINT8*)pBlob->GetBufferPointer();
 				if (pASM == nullptr)
 					return ret;
