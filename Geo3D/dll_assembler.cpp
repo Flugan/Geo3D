@@ -11,10 +11,16 @@ FILE *failFile = NULL;
 vector<DWORD> assembleIns(string s);
 DWORD strToDWORD(string s);
 
+extern float gl_conv;
+extern float gl_minConv;
+extern float gl_screenSize;
+extern uint8_t gl_separation;
+
 extern bool gl_dumpBIN;
 extern bool gl_dumpASM;
-extern bool gl_type;
-extern bool gl_depthZ;
+
+extern bool gl_Type;
+extern bool gl_DepthZ;
 
 HMODULE dxc_module = 0;
 HMODULE dxil_module = 0;
@@ -30,7 +36,7 @@ vector<UINT8> ret;
 	return ret;
 }
 
-uint32_t dumpShader(bool dx9, const wchar_t *type, const void *pData, size_t length, bool pipeline, uint64_t handle) {
+uint32_t dumpShader(const wchar_t *type, const void *pData, size_t length) {
 	uint32_t crc = compute_crc32((UINT8*)pData, length);
 	FILE *f;
 	wchar_t sPath[MAX_PATH];
@@ -49,18 +55,9 @@ uint32_t dumpShader(bool dx9, const wchar_t *type, const void *pData, size_t len
 		if (gl_dumpASM) {
 			auto ASM = asmShader(pData, length);
 			filesystem::path file;
-			if (handle != 0 && pipeline) {
-				swprintf_s(sPath, MAX_PATH, L"%16llX", handle);
-				auto pipeline_path = dump_path / sPath;
-				filesystem::create_directories(pipeline_path);
-				swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
-				file = pipeline_path / sPath;
-			}
-			else {
-				filesystem::create_directories(dump_path);
-				swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
-				file = dump_path / sPath;
-			}
+			filesystem::create_directories(dump_path);
+			swprintf_s(sPath, MAX_PATH, L"%08lX-%s.txt", crc, type);
+			file = dump_path / sPath;
 			_wfopen_s(&f, file.c_str(), L"wb");
 			if (f != 0) {
 				fwrite(ASM.data(), 1, ASM.size(), f);
@@ -197,7 +194,7 @@ vector<UINT8> asmShader(const void* pData, size_t length) {
 	}
 }
 
-vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left, float conv, float screenSize, float separation) {
+vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left) {
 	if (dx9) {
 		vector<UINT8> shaderOut;
 		auto lines = stringToLines((char*)shader.data(), shader.size());
@@ -216,14 +213,14 @@ vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left, float conv, float
 					for (size_t j = i + 1; j < lines.size(); j++) {
 						string d = lines[j];
 						if (d.find("def") == string::npos) {
-							float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
+							float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
 							char buf[80];
 							sprintf_s(buf, 80, "%.6f", left ? finalSep : -finalSep);
 							string sepS(buf);
-							sprintf_s(buf, 80, "%.3f", conv);
+							sprintf_s(buf, 80, "%.3f", gl_conv);
 							string convS(buf);
 							string signS = left ? "1" : "-1";
-							shader += "    def c250, " + convS + ", " + sepS + ", " + signS + ", 0\n";
+							shader += "    def c249, " + convS + ", " + sepS + ", " + signS + ", 0\n";
 							i = j - 1;
 							break;
 						}
@@ -277,15 +274,15 @@ vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left, float conv, float
 				if (!stereoDone) {
 					stereoDone = true;
 					sReg = "r" + to_string(temp - 1) + ".xyzw";
-					float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
+					float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
 					char buf[80];
 					sprintf_s(buf, 80, "%.6f", left ? -finalSep : finalSep);
 					string sep(buf);
-					sprintf_s(buf, 80, "%.3f", -conv);
+					sprintf_s(buf, 80, "%.3f", -gl_conv);
 					string conv(buf);
 					string side = left ? "1" : "-1";
 
-					shader += "mov " + sReg + "l(" + sep + ", " + conv + ", " + side + ", 0)";
+					shader += "mov " + sReg + " l(" + sep + ", " + conv + ", " + side + ", 0)";
 				}
 				shader += s + "\n";
 			}
@@ -295,13 +292,13 @@ vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left, float conv, float
 			}
 		}
 		regex stereo("stereo");
-		shader = regex_replace(shader, stereo, "sReg");
+		shader = regex_replace(shader, stereo, "r" + to_string(temp - 1));
 		shaderOut = readV(shader.data(), shader.size());
 		return shaderOut;
 	}
 	else {
-		float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
-		double dConv = -conv;
+		float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
+		double dConv = -gl_conv;
 		DWORD64* pConv = (DWORD64*)&dConv;
 		double dSep = left ? finalSep : -finalSep;
 		DWORD64* pSep = (DWORD64*)&dSep;
@@ -325,7 +322,7 @@ vector<UINT8> patch(bool dx9, vector<UINT8> shader, bool left, float conv, float
 	}
 }
 
-vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenSize, float separation) {
+vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left) {
 	vector<UINT8> shaderOutput;
 	auto lines = stringToLines((char*)ASM.data(), ASM.size());
 
@@ -404,8 +401,8 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 		size_t sizeGap = 0;
 		size_t rowGap = 0;
 
-		float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
-		double dConv = -conv;
+		float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
+		double dConv = -gl_conv;
 		DWORD64* pConv = (DWORD64*)&dConv;
 		double dSep = left ? -finalSep : finalSep;
 		DWORD64* pSep = (DWORD64*)&dSep;
@@ -442,15 +439,14 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 			}
 
 			shaderS.push_back("  %" + to_string(lastValue + 1) + " = fadd fast float " + sX + ", 0.000000e+00");
-			if (gl_depthZ)
-				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fadd fast float " + sZ + ", " + convS);
+			if (gl_DepthZ)
+				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fcmp fast une float " + sZ + ", 1.000000e+00");
 			else
-				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fadd fast float " + sW + ", " + convS);
-
+				shaderS.push_back("  %" + to_string(lastValue + 2) + " = fcmp fast une float " + sW + ", 1.000000e+00");
 			shaderS.push_back("  br i1 %" + to_string(lastValue + 2) + ", label %" + to_string(lastValue + 3) + ", label %" + to_string(lastValue + 7));
 			shaderS.push_back("");
 			shaderS.push_back("; <label>:" + to_string(lastValue + 3));
-			if (gl_depthZ)
+			if (gl_DepthZ)
 				shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sZ + ", " + convS);
 			else
 				shaderS.push_back("  %" + to_string(lastValue + 4) + " = fadd fast float " + sW + ", " + convS);
@@ -529,7 +525,7 @@ vector<UINT8> changeDXIL(vector<UINT8> ASM, bool left, float conv, float screenS
 	return shaderOutput;
 }
 
-vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenSize, float separation) {
+vector<UINT8> changeASM9(vector<UINT8> ASM, bool left) {
 	vector<UINT8> shaderOut;
 	string reg((char*)ASM.data(), ASM.size());
 	int tempReg = 0;
@@ -584,17 +580,17 @@ vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenS
 				string sourceReg = "r" + to_string(tempReg);
 				string calcReg = "r" + to_string(tempReg + 1);
 
-				if (gl_type) {
-						shader +=
-							"add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
-							"mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n";
-					}
-				} else {
+				if (gl_Type) {
 					shader +=
-							"if_ne " + sourceReg + ".w, c250.z\n" +
-							"  add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
-							"  mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n" +
-							"endif\n";
+						"    add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
+						"    mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n";
+				}
+				else {
+					shader +=
+						"    if_ne " + sourceReg + ".w, c250.z\n" +
+						"      add " + calcReg + ".x, " + sourceReg + ".w, c250.x\n" +
+						"      mad " + oReg + ".x, " + calcReg + ".x, c250.y, " + sourceReg + ".x\n" +
+						"    endif\n";
 				}
 			}
 		}
@@ -605,11 +601,11 @@ vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenS
 				for (size_t j = i + 1; j < lines.size(); j++) {
 					string d = lines[j];
 					if (d.find("def") == string::npos) {
-						float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
+						float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
 						char buf[80];
 						sprintf_s(buf, 80, "%.6f", left ? -finalSep : finalSep);
 						string sepS(buf);
-						sprintf_s(buf, 80, "%.3f", -conv);
+						sprintf_s(buf, 80, "%.3f", -gl_conv);
 						string convS(buf);
 						shader += "    def c250, " + convS + ", " + sepS + ", 1.000000, 0\n";
 						i = j - 1;
@@ -624,11 +620,11 @@ vector<UINT8> changeASM9(vector<UINT8> ASM, bool left, float conv, float screenS
 	return shaderOut;
 }
 
-vector<UINT8> changeASM(bool dx9, vector<UINT8> ASM, bool left, float conv, float screenSize, float separation) {
+vector<UINT8> changeASM(bool dx9, vector<UINT8> ASM, bool left) {
 	if (ASM.size() > 0 && ASM[0] == ';')
-		return changeDXIL(ASM, left, conv, screenSize, separation);
+		return changeDXIL(ASM, left);
 	if (dx9)
-		return changeASM9(ASM, left, conv, screenSize, separation);
+		return changeASM9(ASM, left);
 
 	vector<UINT8> shaderOut;
 	auto lines = stringToLines((char*)ASM.data(), ASM.size());
@@ -670,26 +666,46 @@ vector<UINT8> changeASM(bool dx9, vector<UINT8> ASM, bool left, float conv, floa
 		else if (dcl == true) {
 			// after dcl
 			if (s.find("ret") < s.size()) {
-				float finalSep = separation * 0.01f * 6.5f / (2.54f * screenSize * 16 / sqrtf(256 + 81));
+				float finalSep = gl_separation * 0.01f * 6.5f / (2.54f * gl_screenSize * 16 / sqrtf(256 + 81));
 				char buf[80];
 				sprintf_s(buf, 80, "%.6f", left ? -finalSep : finalSep);
 				string sep(buf);
-				sprintf_s(buf, 80, "%.3f", -conv);
+				sprintf_s(buf, 80, "%.3f", -gl_conv);
 				string conv(buf);
 
 				string sourceReg = "r" + to_string(temp - 1);
 				string calcReg = "r" + to_string(temp - 2);
 
-				if (gl_type) {
+				if (gl_minConv > 0) {
+					sprintf_s(buf, 80, "%.3f", -gl_minConv);
+					string convMin(buf);
+
+					sprintf_s(buf, 80, "%.3f", -gl_minConv * 2);
+					string convMin2(buf);
+
 					shader +=
-						"add " + calcReg + ".x, " + sourceReg + ".z, l(" + conv + ")\n" +
-						"mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +				}
-				else {
-					shader +=
-						"if_ne " + sourceReg + ".w, l(1.000000)\n" +
-						"  add " + calcReg + ".x, " + sourceReg + ".z, l(" + conv + ")\n" +
+						"if_ne " + sourceReg + ".w, l(1.000000)\n"
+						"  if_lt " + sourceReg + ".w, l(" + convMin2 + ")\n"
+						"    add " + calcReg + ".x, " + sourceReg + ".w, l(" + convMin + ")\n" +
+						"  else\n" +
+						"    add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
+						"  endif\n" +
 						"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
 						"endif\n";
+				}
+				else {
+					if (gl_Type) {
+						shader +=
+							"add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
+							"mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n";
+					}
+					else {
+						shader +=
+							"if_ne " + sourceReg + ".w, l(1.000000)\n"
+							"  add " + calcReg + ".x, " + sourceReg + ".w, l(" + conv + ")\n" +
+							"  mad " + oReg + ".x, " + calcReg + ".x, l(" + sep + "), " + sourceReg + ".x\n" +
+							"endif\n";
+					}
 				}
 			}
 			if (oReg.size() == 0) {
