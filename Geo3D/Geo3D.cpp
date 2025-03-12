@@ -18,8 +18,8 @@ bool gl_dumpASM = false;
 
 bool gl_2D = false;
 bool gl_quickLoad = false;
-bool gl_Type = false;
-bool gl_DepthZ = false;
+bool gl_type = false;
+bool gl_depthZ = false;
 bool gl_present = false;
 bool gl_pipelineRepeat = false;
 
@@ -32,6 +32,8 @@ static void load_config();
 struct PSO {
 	uint8_t separation;
 	float convergence;
+	bool type;
+	bool depthZ;
 	vector<pipeline_subobject> objects;
 	pipeline_layout layout;
 
@@ -633,7 +635,7 @@ void updatePipeline(reshade::api::device* device, PSO* pso) {
 
 static void onInitPipeline(device* device, pipeline_layout layout, uint32_t subobject_count, const pipeline_subobject* subobjects, pipeline pipeline)
 {
-	if (gl_pipelineRepeat) {
+	if (!gl_pipelineRepeat) {
 		if (PSOmap.count(pipeline.handle) == 1)
 			return;
 	}
@@ -651,6 +653,9 @@ static void onInitPipeline(device* device, pipeline_layout layout, uint32_t subo
 	storePipelineStateCrosire(layout, subobject_count, subobjects, &pso);
 	pso.separation = gl_separation;
 	pso.convergence = gl_conv;
+	pso.type = gl_type;
+	pso.depthZ = gl_depthZ;
+
 	for (uint32_t i = 0; i < subobject_count; ++i)
 	{
 		switch (subobjects[i].type)
@@ -754,9 +759,11 @@ static void onBindPipeline(command_list* cmd_list, pipeline_stage stage, reshade
 	if (PSOmap.count(pipeline.handle) == 1) {
 		PSO* pso = &PSOmap[pipeline.handle];
 		
-		if (pso->convergence != gl_conv || pso->separation != gl_separation) {
+		if (pso->convergence != gl_conv || pso->separation != gl_separation || pso->type != gl_type || pso->depthZ != pso->depthZ) {
 			pso->convergence = gl_conv;
 			pso->separation = gl_separation;
+			pso->type = gl_type;
+			pso->depthZ = gl_depthZ;
 			updatePipeline(cmd_list->get_device(), pso);
 		}
 			
@@ -828,7 +835,7 @@ static void onPresent(command_queue* queue, swapchain* swapchain, const rect* so
 		gl_left = !gl_left;
 	}
 	else {
-		gl_left = gl_runtimeLeft;
+		gl_left = gl_leftVar;
 	}
 }
 
@@ -840,7 +847,7 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	if (framecount > 0)
 		gl_leftVar = (framecount % 2) == 0;
 
-	if (runtime->is_key_pressed(VK_F8)) {
+	if (runtime->is_key_pressed(VK_F9)) {
 		gl_left = !gl_left;
 	}
 
@@ -1108,6 +1115,16 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 	}
 
 	if (runtime->is_key_down(VK_CONTROL)) {
+		if (runtime->is_key_pressed(VK_F1)) {
+#pragma omp parallel
+#pragma omp for
+			for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
+				PSO* pso = &it->second;
+				if (pso->convergence == 0)
+					updatePipeline(runtime->get_device(), pso);
+			}
+		}
+
 		if (runtime->is_key_pressed(VK_F2)) {
 			gl_2D = !gl_2D;
 		}
@@ -1152,14 +1169,20 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 				reshade::set_config_value(nullptr, "Geo3D", "StereoConvergence", gl_conv);
 			}
 			if (runtime->is_key_pressed(VK_F7)) {
-				gl_Type = !gl_Type;
-				gl_conv = 0;
-				reshade::set_config_value(nullptr, "Geo3D", "Type", gl_Type);
+				gl_type = !gl_type;
+				reshade::set_config_value(nullptr, "Geo3D", "Type", gl_type);
+				for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
+					PSO* pso = &it->second;
+					pso->type = gl_type;
+				}
 			}
 			if (runtime->is_key_pressed(VK_F8)) {
-				gl_DepthZ = !gl_DepthZ;
-				gl_conv = 0;
-				reshade::set_config_value(nullptr, "Geo3D", "DepthZ", gl_DepthZ);
+				gl_depthZ = !gl_depthZ;
+				reshade::set_config_value(nullptr, "Geo3D", "DepthZ", gl_depthZ);
+				for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
+					PSO* pso = &it->second;
+					pso->depthZ = gl_depthZ;
+				}
 			}
 		}
 	}
@@ -1172,10 +1195,10 @@ static void load_config()
 	reshade::get_config_value(nullptr, "Geo3D", "DumpASM", gl_dumpASM);
 
 	reshade::get_config_value(nullptr, "Geo3D", "QuickLoad", gl_quickLoad);
-	reshade::get_config_value(nullptr, "Geo3D", "Type", gl_Type);
-	reshade::get_config_value(nullptr, "Geo3D", "DepthZ", gl_DepthZ);
+	reshade::get_config_value(nullptr, "Geo3D", "DepthZ", gl_depthZ);
 	reshade::get_config_value(nullptr, "Geo3D", "Present", gl_present);
 	reshade::get_config_value(nullptr, "Geo3D", "PipelineRepeat", gl_pipelineRepeat);
+	reshade::get_config_value(nullptr, "Geo3D", "ShaderType", gl_type);
 	
 	reshade::get_config_value(nullptr, "Geo3D", "StereoConvergence", gl_conv);
 	reshade::get_config_value(nullptr, "Geo3D", "StereoMinConvergence", gl_minConv);
@@ -1357,7 +1380,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 		reshade::register_event<reshade::addon_event::init_command_list>(onInitCommandList);
 		reshade::register_event<reshade::addon_event::destroy_command_list>(onDestroyCommandList);
 		reshade::register_event<reshade::addon_event::reset_command_list>(onResetCommandList);
-		reshade::register_event<reshade::addon_event::destroy_pipeline>(onDestroyPipeline);
 		break;
 	case DLL_PROCESS_DETACH:
 		reshade::unregister_addon(hModule);
