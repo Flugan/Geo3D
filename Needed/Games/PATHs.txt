@@ -1,0 +1,9 @@
+C:\XboxGames
+D:\XboxGames
+M:\XboxGames
+C:\SSD
+D:\SSD
+G:\EA
+G:\Epic
+G:\Games
+M:\Games
