@@ -148,7 +148,11 @@ namespace Geo3D_Installer
             {
                 System.IO.File.Copy("ReShade\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
                 System.IO.File.Copy("ReShade\\ReShadePreset.ini", installDir + "\\ReShadePreset.ini", true);
-                System.IO.File.Copy("ReShade\\ReShade.ini", installDir + "\\ReShade.ini", true);
+                try {
+                    System.IO.File.Copy("ReShade\\ReShade.ini", installDir + "\\ReShade.ini", false);
+                }
+                catch { }
+                
 
                 if (xVR.IsChecked == true)
                 {
