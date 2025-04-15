@@ -1,0 +1,375 @@
+;
+; Input signature:
+;
+; Name                 Index   Mask Register SysValue  Format   Used
+; -------------------- ----- ------ -------- -------- ------- ------
+; POSITION                 0   xyz         0     NONE   float   xyz 
+; COLOR                    0   xyzw        1     NONE   float   xyzw
+; TEXCOORD                 0   xyz         2     NONE   float   xyz 
+; TEXCOORD                 1   xy          3     NONE   float   xy  
+; TEXCOORD                 2   xy          4     NONE   float   xy  
+;
+;
+; Output signature:
+;
+; Name                 Index   Mask Register SysValue  Format   Used
+; -------------------- ----- ------ -------- -------- ------- ------
+; SV_Position              0   xyzw        0      POS   float   xyzw
+; TEXCOORD                 0   xyzw        1     NONE   float   xyzw
+; TEXCOORD                 1   xyzw        2     NONE   float   xyzw
+; TEXCOORD                 2   xyzw        3     NONE   float   xyzw
+; TEXCOORD                 3   xy          4     NONE   float   xy  
+; SV_ClipDistance          0   x           5  CLIPDST   float   x   
+;
+; shader hash: 439be5c7d0adbb33a2e364f168b42ed2
+;
+; Pipeline Runtime Information: 
+;
+; Vertex Shader
+; OutputPositionPresent=1
+;
+;
+; Input signature:
+;
+; Name                 Index             InterpMode DynIdx
+; -------------------- ----- ---------------------- ------
+; POSITION                 0                              
+; COLOR                    0                              
+; TEXCOORD                 0                              
+; TEXCOORD                 1                              
+; TEXCOORD                 2                              
+;
+; Output signature:
+;
+; Name                 Index             InterpMode DynIdx
+; -------------------- ----- ---------------------- ------
+; SV_Position              0          noperspective       
+; TEXCOORD                 0                 linear       
+; TEXCOORD                 1                 linear       
+; TEXCOORD                 2                 linear       
+; TEXCOORD                 3                 linear       
+; SV_ClipDistance          0                 linear       
+;
+; Buffer Definitions:
+;
+; cbuffer 
+; {
+;
+;   [496 x i8] (type annotation not present)
+;
+; }
+;
+; cbuffer 
+; {
+;
+;   [476 x i8] (type annotation not present)
+;
+; }
+;
+; cbuffer 
+; {
+;
+;   [848 x i8] (type annotation not present)
+;
+; }
+;
+; cbuffer 
+; {
+;
+;   [112 x i8] (type annotation not present)
+;
+; }
+;
+;
+; Resource Bindings:
+;
+; Name                                 Type  Format         Dim      ID      HLSL Bind  Count
+; ------------------------------ ---------- ------- ----------- ------- -------------- ------
+;                                   cbuffer      NA          NA     CB0            cb7     1
+;                                   cbuffer      NA          NA     CB1            cb0     1
+;                                   cbuffer      NA          NA     CB2            cb1     1
+;                                   cbuffer      NA          NA     CB3            cb5     1
+;
+;
+; ViewId state:
+;
+; Number of inputs: 18, outputs: 21
+; Outputs dependent on ViewId: {  }
+; Inputs contributing to computation of Outputs:
+;   output 0 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 1 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 2 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 3 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 4 depends on inputs: { 16 }
+;   output 5 depends on inputs: { 17 }
+;   output 6 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 7 depends on inputs: { 10 }
+;   output 8 depends on inputs: { 4 }
+;   output 9 depends on inputs: { 5 }
+;   output 10 depends on inputs: { 6 }
+;   output 11 depends on inputs: { 7 }
+;   output 15 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 16 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 17 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;   output 20 depends on inputs: { 0, 1, 2, 8, 9, 12, 13 }
+;
+target datalayout = "e-m:e-p:32:32-i1:32-i8:32-i16:32-i32:32-i64:64-f16:32-f32:32-f64:64-n8:16:32:64"
+target triple = "dxil-ms-dx"
+
+%dx.types.Handle = type { i8* }
+%dx.types.CBufRet.f32 = type { float, float, float, float }
+%dx.types.CBufRet.i32 = type { i32, i32, i32, i32 }
+%MaterialModifiersConsts = type { [31 x <4 x float>] }
+%GlobalShaderConsts = type { <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, float, float, float, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, i32, float, [6 x <4 x float>], <4 x float>, <2 x i32>, i32, i32, float, i32, i32 }
+%hostlayout.CameraShaderConsts = type { [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], [4 x <4 x float>], <4 x float>, <4 x float>, <4 x i32>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <2 x float>, i32, i32, <2 x i32>, float, float }
+%hostlayout.FrequentVertexConsts = type { [4 x <4 x float>], <4 x float>, <4 x float>, <4 x float> }
+
+define void @vs_main_() {
+  %1 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 2, i32 3, i32 5, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %2 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 2, i32 2, i32 1, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %3 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 2, i32 1, i32 0, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %4 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 2, i32 0, i32 7, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %5 = call float @dx.op.loadInput.f32(i32 4, i32 4, i32 0, i8 0, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %6 = call float @dx.op.loadInput.f32(i32 4, i32 4, i32 0, i8 1, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %7 = call float @dx.op.loadInput.f32(i32 4, i32 3, i32 0, i8 0, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %8 = call float @dx.op.loadInput.f32(i32 4, i32 3, i32 0, i8 1, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %9 = call float @dx.op.loadInput.f32(i32 4, i32 2, i32 0, i8 0, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %10 = call float @dx.op.loadInput.f32(i32 4, i32 2, i32 0, i8 1, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %11 = call float @dx.op.loadInput.f32(i32 4, i32 2, i32 0, i8 2, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %12 = call float @dx.op.loadInput.f32(i32 4, i32 1, i32 0, i8 0, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %13 = call float @dx.op.loadInput.f32(i32 4, i32 1, i32 0, i8 1, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %14 = call float @dx.op.loadInput.f32(i32 4, i32 1, i32 0, i8 2, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %15 = call float @dx.op.loadInput.f32(i32 4, i32 1, i32 0, i8 3, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %16 = call float @dx.op.loadInput.f32(i32 4, i32 0, i32 0, i8 0, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %17 = call float @dx.op.loadInput.f32(i32 4, i32 0, i32 0, i8 1, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %18 = call float @dx.op.loadInput.f32(i32 4, i32 0, i32 0, i8 2, i32 undef)  ; LoadInput(inputSigId,rowIndex,colIndex,gsVertexAxis)
+  %19 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %1, i32 0)  ; CBufferLoadLegacy(handle,regIndex)
+  %20 = extractvalue %dx.types.CBufRet.f32 %19, 0
+  %21 = extractvalue %dx.types.CBufRet.f32 %19, 1
+  %22 = extractvalue %dx.types.CBufRet.f32 %19, 2
+  %23 = extractvalue %dx.types.CBufRet.f32 %19, 3
+  %24 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %1, i32 1)  ; CBufferLoadLegacy(handle,regIndex)
+  %25 = extractvalue %dx.types.CBufRet.f32 %24, 0
+  %26 = extractvalue %dx.types.CBufRet.f32 %24, 1
+  %27 = extractvalue %dx.types.CBufRet.f32 %24, 2
+  %28 = extractvalue %dx.types.CBufRet.f32 %24, 3
+  %29 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %1, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %30 = extractvalue %dx.types.CBufRet.f32 %29, 0
+  %31 = extractvalue %dx.types.CBufRet.f32 %29, 1
+  %32 = extractvalue %dx.types.CBufRet.f32 %29, 2
+  %33 = extractvalue %dx.types.CBufRet.f32 %29, 3
+  %34 = bitcast float %23 to i32
+  %35 = bitcast float %28 to i32
+  %36 = bitcast float %33 to i32
+  %37 = sitofp i32 %34 to float
+  %38 = sitofp i32 %35 to float
+  %39 = sitofp i32 %36 to float
+  %40 = fmul fast float %37, 0x3EE0000000000000
+  %41 = fmul fast float %38, 0x3EE0000000000000
+  %42 = fmul fast float %39, 0x3EE0000000000000
+  %43 = fmul fast float %20, %16
+  %44 = call float @dx.op.tertiary.f32(i32 46, float %17, float %21, float %43)  ; FMad(a,b,c)
+  %45 = call float @dx.op.tertiary.f32(i32 46, float %18, float %22, float %44)  ; FMad(a,b,c)
+  %46 = fadd fast float %40, %45
+  %47 = fmul fast float %25, %16
+  %48 = call float @dx.op.tertiary.f32(i32 46, float %17, float %26, float %47)  ; FMad(a,b,c)
+  %49 = call float @dx.op.tertiary.f32(i32 46, float %18, float %27, float %48)  ; FMad(a,b,c)
+  %50 = fadd fast float %49, %41
+  %51 = fmul fast float %30, %16
+  %52 = call float @dx.op.tertiary.f32(i32 46, float %17, float %31, float %51)  ; FMad(a,b,c)
+  %53 = call float @dx.op.tertiary.f32(i32 46, float %18, float %32, float %52)  ; FMad(a,b,c)
+  %54 = fadd fast float %53, %42
+  %55 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %4, i32 3)  ; CBufferLoadLegacy(handle,regIndex)
+  %56 = extractvalue %dx.types.CBufRet.f32 %55, 0
+  %57 = extractvalue %dx.types.CBufRet.f32 %55, 1
+  %58 = extractvalue %dx.types.CBufRet.f32 %55, 2
+  %59 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %4, i32 1)  ; CBufferLoadLegacy(handle,regIndex)
+  %60 = extractvalue %dx.types.CBufRet.f32 %59, 0
+  %61 = extractvalue %dx.types.CBufRet.f32 %59, 1
+  %62 = extractvalue %dx.types.CBufRet.f32 %59, 2
+  %63 = fmul fast float %61, %58
+  %64 = fmul fast float %62, %57
+  %65 = fsub fast float %63, %64
+  %66 = fmul fast float %62, %56
+  %67 = fmul fast float %60, %58
+  %68 = fsub fast float %66, %67
+  %69 = fmul fast float %60, %57
+  %70 = fmul fast float %61, %56
+  %71 = fsub fast float %69, %70
+  %72 = fmul fast float %10, %8
+  %73 = fmul fast float %9, %7
+  %74 = fadd fast float %72, %73
+  %75 = fmul fast float %9, %8
+  %76 = fmul fast float %10, %7
+  %77 = fsub fast float %75, %76
+  %78 = fmul fast float %60, %74
+  %79 = fmul fast float %61, %74
+  %80 = fmul fast float %62, %74
+  %81 = fmul fast float %56, %77
+  %82 = fmul fast float %57, %77
+  %83 = fmul fast float %58, %77
+  %84 = fadd fast float %46, %78
+  %85 = fadd fast float %50, %79
+  %86 = fadd fast float %54, %80
+  %87 = fadd fast float %84, %81
+  %88 = fadd fast float %85, %82
+  %89 = fadd fast float %86, %83
+  %90 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 22)  ; CBufferLoadLegacy(handle,regIndex)
+  %91 = extractvalue %dx.types.CBufRet.f32 %90, 0
+  %92 = extractvalue %dx.types.CBufRet.f32 %90, 1
+  %93 = extractvalue %dx.types.CBufRet.f32 %90, 2
+  %94 = extractvalue %dx.types.CBufRet.f32 %90, 3
+  %95 = fmul fast float %87, %91
+  %96 = call float @dx.op.tertiary.f32(i32 46, float %88, float %92, float %95)  ; FMad(a,b,c)
+  %97 = call float @dx.op.tertiary.f32(i32 46, float %89, float %93, float %96)  ; FMad(a,b,c)
+  %98 = fadd fast float %97, %94
+  %99 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 0)  ; CBufferLoadLegacy(handle,regIndex)
+  %100 = extractvalue %dx.types.CBufRet.f32 %99, 0
+  %101 = extractvalue %dx.types.CBufRet.f32 %99, 1
+  %102 = extractvalue %dx.types.CBufRet.f32 %99, 2
+  %103 = extractvalue %dx.types.CBufRet.f32 %99, 3
+  %104 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 1)  ; CBufferLoadLegacy(handle,regIndex)
+  %105 = extractvalue %dx.types.CBufRet.f32 %104, 0
+  %106 = extractvalue %dx.types.CBufRet.f32 %104, 1
+  %107 = extractvalue %dx.types.CBufRet.f32 %104, 2
+  %108 = extractvalue %dx.types.CBufRet.f32 %104, 3
+  %109 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %110 = extractvalue %dx.types.CBufRet.f32 %109, 0
+  %111 = extractvalue %dx.types.CBufRet.f32 %109, 1
+  %112 = extractvalue %dx.types.CBufRet.f32 %109, 2
+  %113 = extractvalue %dx.types.CBufRet.f32 %109, 3
+  %114 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 3)  ; CBufferLoadLegacy(handle,regIndex)
+  %115 = extractvalue %dx.types.CBufRet.f32 %114, 0
+  %116 = extractvalue %dx.types.CBufRet.f32 %114, 1
+  %117 = extractvalue %dx.types.CBufRet.f32 %114, 2
+  %118 = extractvalue %dx.types.CBufRet.f32 %114, 3
+  %119 = fmul fast float %100, %87
+  %120 = call float @dx.op.tertiary.f32(i32 46, float %88, float %101, float %119)  ; FMad(a,b,c)
+  %121 = call float @dx.op.tertiary.f32(i32 46, float %89, float %102, float %120)  ; FMad(a,b,c)
+  %122 = fadd fast float %121, %103
+  %123 = fmul fast float %105, %87
+  %124 = call float @dx.op.tertiary.f32(i32 46, float %88, float %106, float %123)  ; FMad(a,b,c)
+  %125 = call float @dx.op.tertiary.f32(i32 46, float %89, float %107, float %124)  ; FMad(a,b,c)
+  %126 = fadd fast float %125, %108
+  %127 = fmul fast float %110, %87
+  %128 = call float @dx.op.tertiary.f32(i32 46, float %88, float %111, float %127)  ; FMad(a,b,c)
+  %129 = call float @dx.op.tertiary.f32(i32 46, float %89, float %112, float %128)  ; FMad(a,b,c)
+  %130 = fadd fast float %129, %113
+  %131 = fmul fast float %115, %87
+  %132 = call float @dx.op.tertiary.f32(i32 46, float %88, float %116, float %131)  ; FMad(a,b,c)
+  %133 = call float @dx.op.tertiary.f32(i32 46, float %89, float %117, float %132)  ; FMad(a,b,c)
+  %134 = fadd fast float %133, %118
+  %135 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %4, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %136 = extractvalue %dx.types.CBufRet.f32 %135, 0
+  %137 = fcmp fast ogt float %136, 5.000000e-01
+  %138 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 29)  ; CBufferLoadLegacy(handle,regIndex)
+  %139 = extractvalue %dx.types.CBufRet.i32 %138, 1
+  %140 = icmp eq i32 %139, 2
+  %141 = and i1 %137, %140
+  br i1 %141, label %142, label %143, !dx.controlflow.hints !34
+
+; <label>:142                                     ; preds = %0
+  br label %143
+
+; <label>:143                                     ; preds = %142, %0
+  %144 = phi float [ 0.000000e+00, %142 ], [ %122, %0 ]
+  %145 = phi float [ 0.000000e+00, %142 ], [ %126, %0 ]
+  %146 = phi float [ 0.000000e+00, %142 ], [ %130, %0 ]
+  %147 = phi float [ 1.000000e+00, %142 ], [ %134, %0 ]
+  %148 = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %2, i32 50)  ; CBufferLoadLegacy(handle,regIndex)
+  %149 = extractvalue %dx.types.CBufRet.f32 %148, 0
+  %150 = extractvalue %dx.types.CBufRet.f32 %148, 1
+  %151 = extractvalue %dx.types.CBufRet.f32 %148, 2
+  %152 = extractvalue %dx.types.CBufRet.f32 %148, 3
+  %153 = call float @dx.op.dot4.f32(i32 56, float %149, float %150, float %151, float %152, float %87, float %88, float %89, float 1.000000e+00)  ; Dot4(ax,ay,az,aw,bx,by,bz,bw)
+  call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 0, float %144)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 1, float %145)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 2, float %146)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 3, float %147)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 0, float %5)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 1, float %6)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 2, float %98)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 3, float %11)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 2, i32 0, i8 0, float %12)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 2, i32 0, i8 1, float %13)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 2, i32 0, i8 2, float %14)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 2, i32 0, i8 3, float %15)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 3, i32 0, i8 0, float %65)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 3, i32 0, i8 1, float %68)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 3, i32 0, i8 2, float %71)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 3, i32 0, i8 3, float %87)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 4, i32 0, i8 0, float %88)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 4, i32 0, i8 1, float %89)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  call void @dx.op.storeOutput.f32(i32 5, i32 5, i32 0, i8 0, float %153)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
+  ret void
+}
+
+; Function Attrs: nounwind readnone
+declare float @dx.op.loadInput.f32(i32, i32, i32, i8, i32) #0
+
+; Function Attrs: nounwind
+declare void @dx.op.storeOutput.f32(i32, i32, i32, i8, float) #1
+
+; Function Attrs: nounwind readnone
+declare float @dx.op.dot4.f32(i32, float, float, float, float, float, float, float, float) #0
+
+; Function Attrs: nounwind readonly
+declare %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32, %dx.types.Handle, i32) #2
+
+; Function Attrs: nounwind readonly
+declare %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32, %dx.types.Handle, i32) #2
+
+; Function Attrs: nounwind readnone
+declare float @dx.op.tertiary.f32(i32, float, float, float) #0
+
+; Function Attrs: nounwind readonly
+declare %dx.types.Handle @dx.op.createHandle(i32, i8, i32, i32, i1) #2
+
+attributes #0 = { nounwind readnone }
+attributes #1 = { nounwind }
+attributes #2 = { nounwind readonly }
+
+!llvm.ident = !{!0}
+!dx.version = !{!1}
+!dx.valver = !{!2}
+!dx.shaderModel = !{!3}
+!dx.resources = !{!4}
+!dx.viewIdState = !{!10}
+!dx.entryPoints = !{!11}
+
+!0 = !{!"clang version 3.7 (tags/RELEASE_370/final)"}
+!1 = !{i32 1, i32 0}
+!2 = !{i32 1, i32 6}
+!3 = !{!"vs", i32 6, i32 0}
+!4 = !{null, null, !5, null}
+!5 = !{!6, !7, !8, !9}
+!6 = !{i32 0, %MaterialModifiersConsts* undef, !"", i32 0, i32 7, i32 1, i32 496, null}
+!7 = !{i32 1, %GlobalShaderConsts* undef, !"", i32 0, i32 0, i32 1, i32 476, null}
+!8 = !{i32 2, %hostlayout.CameraShaderConsts* undef, !"", i32 0, i32 1, i32 1, i32 848, null}
+!9 = !{i32 3, %hostlayout.FrequentVertexConsts* undef, !"", i32 0, i32 5, i32 1, i32 112, null}
+!10 = !{[20 x i32] [i32 18, i32 21, i32 1278031, i32 1278031, i32 1278031, i32 0, i32 256, i32 512, i32 1024, i32 2048, i32 1278031, i32 1278031, i32 128, i32 0, i32 1278031, i32 1278031, i32 0, i32 0, i32 16, i32 32]}
+!11 = !{void ()* @vs_main_, !"vs_main_", !12, !4, null}
+!12 = !{!13, !25, null}
+!13 = !{!14, !17, !19, !20, !23}
+!14 = !{i32 0, !"POSITION", i8 9, i8 0, !15, i8 0, i32 1, i8 3, i32 0, i8 0, !16}
+!15 = !{i32 0}
+!16 = !{i32 3, i32 7}
+!17 = !{i32 1, !"COLOR", i8 9, i8 0, !15, i8 0, i32 1, i8 4, i32 1, i8 0, !18}
+!18 = !{i32 3, i32 15}
+!19 = !{i32 2, !"TEXCOORD", i8 9, i8 0, !15, i8 0, i32 1, i8 3, i32 2, i8 0, !16}
+!20 = !{i32 3, !"TEXCOORD", i8 9, i8 0, !21, i8 0, i32 1, i8 2, i32 3, i8 0, !22}
+!21 = !{i32 1}
+!22 = !{i32 3, i32 3}
+!23 = !{i32 4, !"TEXCOORD", i8 9, i8 0, !24, i8 0, i32 1, i8 2, i32 4, i8 0, !22}
+!24 = !{i32 2}
+!25 = !{!26, !27, !28, !29, !30, !32}
+!26 = !{i32 0, !"SV_Position", i8 9, i8 3, !15, i8 4, i32 1, i8 4, i32 0, i8 0, !18}
+!27 = !{i32 1, !"TEXCOORD", i8 9, i8 0, !15, i8 2, i32 1, i8 4, i32 1, i8 0, !18}
+!28 = !{i32 2, !"TEXCOORD", i8 9, i8 0, !21, i8 2, i32 1, i8 4, i32 2, i8 0, !18}
+!29 = !{i32 3, !"TEXCOORD", i8 9, i8 0, !24, i8 2, i32 1, i8 4, i32 3, i8 0, !18}
+!30 = !{i32 4, !"TEXCOORD", i8 9, i8 0, !31, i8 2, i32 1, i8 2, i32 4, i8 0, !22}
+!31 = !{i32 3}
+!32 = !{i32 5, !"SV_ClipDistance", i8 9, i8 6, !15, i8 2, i32 1, i8 1, i32 5, i8 0, !33}
+!33 = !{i32 3, i32 1}
+!34 = distinct !{!34, !"dx.controlflow.hints", i32 1}
+ 

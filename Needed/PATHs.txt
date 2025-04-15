@@ -1,7 +1,5 @@
 C:\XboxGames
 D:\XboxGames
 D:\SSD
-G:\SSD-C
 G:\SSD-D
-M:\SSD-C
 M:\SSD-D
