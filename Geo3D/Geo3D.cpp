@@ -1170,7 +1170,7 @@ static void onReshadeBeginEffects(effect_runtime* runtime, command_list* cmd_lis
 			}
 			if (runtime->is_key_pressed(VK_F7)) {
 				gl_type = !gl_type;
-				reshade::set_config_value(nullptr, "Geo3D", "Type", gl_type);
+				reshade::set_config_value(nullptr, "Geo3D", "ShaderType", gl_type);
 				for (auto it = PSOmap.begin(); it != PSOmap.end(); ++it) {
 					PSO* pso = &it->second;
 					pso->type = gl_type;
