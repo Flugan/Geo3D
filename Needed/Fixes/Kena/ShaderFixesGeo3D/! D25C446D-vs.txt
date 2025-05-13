@@ -6,7 +6,7 @@
 //
 // Name                 Index   Mask Register SysValue  Format   Used
 // -------------------- ----- ------ -------- -------- ------- ------
-// ATTRIBUTE                0   xyzw        0     NONE   float   xy  
+// ATTRIBUTE                0   xyzw        0     NONE   float   xyz 
 //
 //
 // Output signature:
@@ -17,11 +17,9 @@
 //
 vs_5_0
 dcl_globalFlags refactoringAllowed
-dcl_constantbuffer CB0[1], immediateIndexed
-dcl_input v0.xy
+dcl_input v0.xyz
 dcl_output_siv o0.xyzw, position
-mov o0.xy, v0.xyxx
-mov o0.z, cb0[0].x
+mov o0.xyz, v0.xyzx
 mov o0.w, l(1.0)
 ret 
 // Approximately 0 instruction slots used

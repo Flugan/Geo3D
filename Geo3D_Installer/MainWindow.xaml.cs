@@ -149,7 +149,7 @@ namespace Geo3D_Installer
                 System.IO.File.Copy("ReShade\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
                 System.IO.File.Copy("ReShade\\ReShadePreset.ini", installDir + "\\ReShadePreset.ini", true);
                 try {
-                    System.IO.File.Copy("ReShade\\ReShade.ini", installDir + "\\ReShade.ini", false);
+                    System.IO.File.Copy("Geo3D\\ReShade.ini", installDir + "\\ReShade.ini", false);
                 }
                 catch { }
                 
@@ -230,7 +230,7 @@ namespace Geo3D_Installer
                 }
                 System.IO.File.Copy("DXIL\\dxcompiler.dll", installDir + "\\dxcompiler2.dll", true);
                 System.IO.File.Copy("DXIL\\dxil.dll", installDir + "\\dxil2.dll", true);
-                System.IO.File.Copy("Geo3D\\Geo3D.addon64", installDir + "\\Geo3D.addon64", true);
+                System.IO.File.Copy("Geo3D\\Geo3Dv3.11.addon64", installDir + "\\Geo3Dv3.11.addon64", true);
             }
             else
             {
@@ -280,7 +280,7 @@ namespace Geo3D_Installer
                     if (System.IO.File.Exists(installDir + "\\opengl32.dll"))
                         System.IO.File.Copy("ReShade\\ReShade32.dll", installDir + "\\opengl32.dll", true);
                 }
-                System.IO.File.Copy("Geo3D\\Geo3D.addon32", installDir + "\\Geo3D.addon32", true);
+                System.IO.File.Copy("Geo3D\\Geo3Dv3.11.addon32", installDir + "\\Geo3Dv3.11.addon32", true);
             }
 
             gameGeo3D.Clear();
@@ -324,9 +324,14 @@ namespace Geo3D_Installer
             System.IO.File.Delete(combinedPath + "\\VRExport.addon64");
             System.IO.File.Delete(combinedPath + "\\VRExport.addon32");
 
-            System.IO.File.Delete(combinedPath + "\\Geo3D.addon");
-            System.IO.File.Delete(combinedPath + "\\Geo3D.addon64");
-            System.IO.File.Delete(combinedPath + "\\Geo3D.addon32");
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv3.11.addon64");
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv3.11.addon32");
+
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.addon64");
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.addon32");
+
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv4.0.2.addon64");
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv4.0.2.addon32");
 
             System.IO.File.Delete(combinedPath + "\\srReshade_v1.0.0.addon64");
             System.IO.File.Delete(combinedPath + "\\srReshade_v1.0.0.addon32");
