@@ -12,6 +12,9 @@ https://github.com/Flugan/Installler
 
 Installation is rather complex so I built an installer thet with the right config can find all your installed games. This means you will have a huge amount of unfixed games. Some games don't need a fix beyond the initial install as everything is handled by Geo3D. This also means that the installer is able to handle games as they are released even if the game is an unknown game. This is not unique as Geo-11 can install raw games that sometimes get fixed. The difference is scope making installation harder because of the amount of moving parts, the amount of games supported with 32/64-bit DX9-12. The installer is capable of making mistakes since it picks 32-bit == dx9, 64-bit == dx10+. A tiny few fall between these gaps. Some DX12 games require DX12 setting. Any 32-bit DX10-11 games.
 
+# Homepage
+https://flugan.github.io
+
 # Discord
 https://discord.gg/kk79BmwdX5
 
