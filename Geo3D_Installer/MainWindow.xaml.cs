@@ -144,7 +144,7 @@ namespace Geo3D_Installer
             System.IO.File.WriteAllText(currentGame.path + "\\Geo3D.txt", "");
             var installDir = System.IO.Path.GetDirectoryName(currentGame.path + "\\" + currentGame.exe);
 
-            if (dxVersion != 0)
+            if (true)
             {
                 System.IO.File.Copy("ReShade\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
                 System.IO.File.Copy("ReShade\\ReShadePreset.ini", installDir + "\\ReShadePreset.ini", true);
@@ -152,41 +152,70 @@ namespace Geo3D_Installer
                     System.IO.File.Copy("Geo3D\\ReShade.ini", installDir + "\\ReShade.ini", false);
                 }
                 catch { }
-                
-
-                if (xVR.IsChecked == true)
+                string lastFolder = new DirectoryInfo(currentGame.path).Name;
+                string sourceDir;
+                string targetDir;
+                try
                 {
-                    System.IO.File.Copy("VR\\VRExport\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
-                    if (currentGame.bits == "x86")
+                    sourceDir = @"Fixes\" + lastFolder;
+                    targetDir = installDir;
+
+                    // Recursively copy all files and subdirectories
+                    foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                        Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                    foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                        System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
+                }
+                catch { }
+                try
+                {
+                    sourceDir = @"Fixes\!Playable\" + lastFolder;
+                    targetDir = installDir;
+
+                    if (Directory.Exists(sourceDir))
                     {
-                        System.IO.File.Copy("VR\\VRExport\\VRExport.addon32", installDir + "\\VRExport.addon32", true);
-                    }
-                    else
-                    {
-                        System.IO.File.Copy("VR\\VRExport\\VRExport.addon64", installDir + "\\VRExport.addon64", true);
+                        System.IO.File.Delete(installDir + "\\Loadable.txt");
+                        System.IO.File.WriteAllText(installDir + "\\Playable.txt", "");
+                        // Recursively copy all files and subdirectories
+                        foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                            Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                        foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                            System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
                     }
                 }
+                catch { }
+                try
+                {
+                    sourceDir = @"Fixes\!Loadable\" + lastFolder;
+                    targetDir = installDir;
+
+                    if (Directory.Exists(sourceDir))
+                    {
+                        System.IO.File.WriteAllText(installDir + "\\Loadable.txt", "");
+                        // Recursively copy all files and subdirectories
+                        foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                            Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                        foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                            System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
+                    }
+                }
+                catch { }
             }
             if (currentGame.bits == "x64")
             {
+                System.IO.File.Delete(installDir + "\\srReshade_v1.0.0.addon64");
                 if (xSR.IsChecked == true)
                 {
-                    System.IO.File.Copy("srReshade\\srReshade_v1.0.0.addon64", installDir + "\\srReshade_v1.0.0.addon64", true);
-                }
-                else
-                {
-                    System.IO.File.Delete(installDir + "\\srReshade_v1.0.0.addon64");
+                    System.IO.File.Copy("srReshade\\srReshade_v2.0.0.addon64", installDir + "\\srReshade_v2.0.0.addon64", true);
                 }
 
                 if (xVR.IsChecked == true)
                 {
                     System.IO.File.Copy("VRExport\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
                     System.IO.File.Copy("VRExport\\VRExport.addon64", installDir + "\\VRExport.addon64", true);
-                }
-                else
-                {
-                    System.IO.File.Copy("ReShade\\3DToElse.fx", installDir + "\\3DToElse.fx", true);
-                    System.IO.File.Delete(installDir + "\\VRExport.addon64");
                 }
 
                 if (dxVersion == 9)
@@ -230,16 +259,20 @@ namespace Geo3D_Installer
                 }
                 System.IO.File.Copy("DXIL\\dxcompiler.dll", installDir + "\\dxcompiler2.dll", true);
                 System.IO.File.Copy("DXIL\\dxil.dll", installDir + "\\dxil2.dll", true);
-                System.IO.File.Copy("Geo3D\\Geo3Dv3.11.addon64", installDir + "\\Geo3Dv3.11.addon64", true);
+                System.IO.File.Delete(installDir + "\\Geo3Dv1.4.1.addon64");
+                System.IO.File.Delete(installDir + "\\Geo3Dv1.4.1.addon32");
+                System.IO.File.Delete(installDir + "\\Geo3D_v3.11.addon32");
+                System.IO.File.Copy("Geo3D\\Geo3D_v1.3.3.addon64", installDir + "\\Geo3D_v1.3.3.addon64", true);
             }
             else
             {
+                System.IO.File.Delete(installDir + "\\srReshade_v1.0.0.addon32");
                 if (xSR.IsChecked == true)
                 {
-                    System.IO.File.Copy("srReshade\\srReshade_v1.0.0.addon32", installDir + "\\srReshade_v1.0.0.addon32", true);
+                    System.IO.File.Copy("srReshade\\srReshade_v2.0.0.addon32", installDir + "\\srReshade_v2.0.0.addon32", true);
                 }
                 else {
-                    System.IO.File.Delete(installDir + "\\srReshade_v1.0.0.addon32");
+                    System.IO.File.Delete(installDir + "\\srReshade_v2.0.0.addon32");
                 }
 
                 if (xVR.IsChecked == true)
@@ -280,7 +313,8 @@ namespace Geo3D_Installer
                     if (System.IO.File.Exists(installDir + "\\opengl32.dll"))
                         System.IO.File.Copy("ReShade\\ReShade32.dll", installDir + "\\opengl32.dll", true);
                 }
-                System.IO.File.Copy("Geo3D\\Geo3Dv3.11.addon32", installDir + "\\Geo3Dv3.11.addon32", true);
+                System.IO.File.Delete(installDir + "\\Geo3Dv1.4.1.addon32");
+                System.IO.File.Copy("Geo3D\\Geo3D_v3.11.addon32", installDir + "\\Geo3D_v3.11.addon32", true);
             }
 
             gameGeo3D.Clear();
@@ -312,6 +346,23 @@ namespace Geo3D_Installer
             }
         }
 
+        private void list_MouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            var currentGame = (Game)gameListBox.SelectedItem;
+            if (currentGame == null)
+                return;
+
+            currentGame.Expand();
+            if (currentGame.bits == "x86")
+            {
+                installGame(currentGame, 9);
+            }
+            else
+            {
+                installGame(currentGame, 10);
+            }
+        }
+
         private void uninstall_Click(object sender, RoutedEventArgs e)
         {
             var currentGame = (Game)geo3DBox.SelectedItem;
@@ -320,21 +371,38 @@ namespace Geo3D_Installer
 
             System.IO.File.Delete(currentGame.path + "\\Geo3D.txt");
             string combinedPath = Directory.GetParent(currentGame.path + "\\" + currentGame.exe).ToString();
+            System.IO.File.Delete(combinedPath + "\\Playable.txt");
+            System.IO.File.Delete(combinedPath + "\\Loadable.txt");
+            string lastFolder = new DirectoryInfo(currentGame.path).Name;
+            if (Directory.Exists("Fixes\\" + lastFolder) || 
+                Directory.Exists("Fixes\\Playable\\" + lastFolder) ||
+                Directory.Exists("Fixes\\Loadable\\" + lastFolder)
+                )
+            {
+                try
+                {
+                    Directory.Delete(combinedPath + "\\ShaderFixesGeo3D", true);
+                }
+                catch { }
+                try
+                {
+                    System.IO.File.Delete(combinedPath + "\\reshade.ini");
+                }
+                catch { }
+            }
+            
             System.IO.File.Delete(combinedPath + "\\3DToElse.fx");
             System.IO.File.Delete(combinedPath + "\\VRExport.addon64");
             System.IO.File.Delete(combinedPath + "\\VRExport.addon32");
 
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv3.11.addon64");
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv3.11.addon32");
-
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.addon64");
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.addon32");
-
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv4.0.2.addon64");
-            System.IO.File.Delete(combinedPath + "\\Geo3Dv4.0.2.addon32");
-
-            System.IO.File.Delete(combinedPath + "\\srReshade_v1.0.0.addon64");
             System.IO.File.Delete(combinedPath + "\\srReshade_v1.0.0.addon32");
+            System.IO.File.Delete(combinedPath + "\\srReshade_v1.0.0.addon64");
+
+            System.IO.File.Delete(combinedPath + "\\srReshade_v2.0.0.addon32");
+            System.IO.File.Delete(combinedPath + "\\srReshade_v2.0.0.addon64");
+
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.1.addon64");
+            System.IO.File.Delete(combinedPath + "\\Geo3Dv1.4.1.addon32");
 
             System.IO.File.Delete(combinedPath + "\\d3d9.dll");
             System.IO.File.Delete(combinedPath + "\\d3d12.dll");
@@ -659,6 +727,65 @@ namespace Geo3D_Installer
                             {
                                 (sender as BackgroundWorker).ReportProgress(0);
                                 addGame(name, path);
+
+                                string installDir = path;
+                                string lastFolder = new DirectoryInfo(installDir).Name;
+                                string sourceDir;
+                                string targetDir;
+                                System.IO.File.Delete(installDir + "\\Begun.txt");
+                                System.IO.File.Delete(installDir + "\\Loadable.txt");
+                                System.IO.File.Delete(installDir + "\\Playable.txt");
+                                try
+                                {
+                                    sourceDir = @"Fixes\" + lastFolder;
+                                    targetDir = installDir;
+
+                                    if (Directory.Exists(sourceDir))
+                                    {
+                                        System.IO.File.WriteAllText(installDir + "\\Begun.txt", "");
+                                        // Recursively copy all files and subdirectories
+                                        foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                                            Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                                        foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                                            System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
+                                    }
+                                }
+                                catch { }
+                                try
+                                {
+                                    sourceDir = @"Fixes\!Loadable\" + lastFolder;
+                                    targetDir = installDir;
+
+                                    if (Directory.Exists(sourceDir))
+                                    {
+                                        System.IO.File.WriteAllText(installDir + "\\Loadable.txt", "");
+                                        // Recursively copy all files and subdirectories
+                                        foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                                            Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                                        foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                                            System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
+                                    }
+                                }
+                                catch { }
+                                try
+                                {
+                                    sourceDir = @"Fixes\!Playable\" + lastFolder;
+                                    targetDir = installDir;
+
+                                    if (Directory.Exists(sourceDir))
+                                    {
+                                        System.IO.File.WriteAllText(installDir + "\\Playable.txt", "");
+                                        // Recursively copy all files and subdirectories
+                                        foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                                            Directory.CreateDirectory(dirPath.Replace(sourceDir, targetDir));
+
+                                        foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                                            System.IO.File.Copy(filePath, filePath.Replace(sourceDir, targetDir), overwrite: true);
+                                    }
+                                }
+                                catch { }
                             }
                         }
                     }
@@ -863,6 +990,14 @@ namespace Geo3D_Installer
                 display += " (DX12)";
             else if (System.IO.File.Exists(installDir + "\\opengl32.dll"))
                 display += " (OpenGL)";
+            else if (System.IO.File.Exists(installDir + "\\dxgi.dll"))
+                display += " (DX10+)";
+            if (System.IO.File.Exists(installDir + "\\Playable.txt"))
+                display += " (Playable)";
+            if (System.IO.File.Exists(installDir + "\\Loadable.txt"))
+                display += " (Loadable)";
+            if (System.IO.File.Exists(installDir + "\\Begun.txt"))
+                display += " (Begun)";
 
             if (displayPath)
                 display += " (" + path.Replace(@"\SteamApps\Common\", @"\") + ")";

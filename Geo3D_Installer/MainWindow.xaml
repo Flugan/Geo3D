@@ -15,7 +15,7 @@
                 Discord
             </Hyperlink>
         </TextBlock>
-        <ListBox x:Name="gameListBox" HorizontalAlignment="Left" Margin="10,51,0,31" Width="500" ToolTipService.ToolTip="Game list"/>
+        <ListBox x:Name="gameListBox" HorizontalAlignment="Left" Margin="10,51,0,31" Width="500" ToolTipService.ToolTip="Game list" MouseDoubleClick="list_MouseDoubleClick"/>
         <ListBox x:Name="geo3DBox" Margin="0,51,10,31" HorizontalAlignment="Right" Width="500" ToolTipService.ToolTip="Games with Geo3D" MouseDoubleClick="geo3DBox_MouseDoubleClick"/>
         <TextBox x:Name="Search" HorizontalAlignment="Left" Height="23" Margin="60,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="199" TextChanged="Search_TextChanged" ToolTipService.ToolTip="Search within games/on the left"/>
         <Label x:Name="gameCount" Content="Total Count: 0" HorizontalAlignment="Left" Margin="10,0,0,5" VerticalAlignment="Bottom" Width="123" RenderTransformOrigin="0.504,-1.846"/>
